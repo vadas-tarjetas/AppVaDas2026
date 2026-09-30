@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VaDa's</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --rose:#e8849a;--rose-l:#fde8ef;--rose-m:#f5c0ce;--rose-d:#b5455e;
+  --sage:#a8c5a0;--sage-l:#eaf3e8;
+  --cream:#faf7f4;--cream-d:#f2ece6;--white:#fff;
+  --text:#3d2b2b;--muted:#9e8080;--border:#ecdcdc;
+  --green:#5aab6e;--green-l:#e8f5e9;--red:#d96060;--red-l:#fce4ec;
+  --amber:#c97b2a;--amber-l:#fff3e0;--blue:#4a7fb5;--blue-l:#e3f2fd;
+  --admin:#7b6caa;--admin-l:#f0edf8;--admin-m:#c4b8e8;
+}
+body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;font-size:14px}
+
+/* ══ MODO SELECTOR ══ */
+#modoSelector{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;gap:1.5rem;background:linear-gradient(135deg,var(--rose-l) 0%,var(--cream) 60%,var(--admin-l) 100%)}
+#modoSelector h1{font-family:'Playfair Display',serif;font-size:2rem;color:var(--rose-d);text-align:center}
+#modoSelector p{color:var(--muted);font-size:.88rem;text-align:center}
+.modo-cards{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;width:100%;max-width:520px}
+.modo-card{flex:1;min-width:200px;background:var(--white);border:2px solid var(--border);border-radius:16px;padding:1.75rem 1.25rem;text-align:center;cursor:pointer;transition:.2s;user-select:none}
+.modo-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.modo-card.pedidos{border-color:var(--rose-m)}.modo-card.pedidos:hover{border-color:var(--rose-d);background:var(--rose-l)}
+.modo-card.admin{border-color:var(--admin-m)}.modo-card.admin:hover{border-color:var(--admin);background:var(--admin-l)}
+.modo-card .icon{font-size:2.5rem;margin-bottom:.75rem}
+.modo-card h2{font-size:1rem;font-weight:700;margin-bottom:.35rem}
+.modo-card p{font-size:.78rem;color:var(--muted)}
+
+/* ══ APP SHELL ══ */
+#appShell{display:none;flex-direction:column;min-height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:.65rem 1rem;display:flex;align-items:center;gap:.75rem;position:sticky;top:0;z-index:200}
+.topbar-brand{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--rose-d);flex:1}
+.topbar-brand small{font-size:.65rem;font-weight:400;color:var(--muted);display:block;font-family:'Inter',sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.topbar-mode{font-size:.7rem;font-weight:700;padding:.25rem .65rem;border-radius:50px;border:none;cursor:pointer}
+.topbar-mode.pedidos{background:var(--rose-l);color:var(--rose-d)}
+.topbar-mode.admin{background:var(--admin-l);color:var(--admin)}
+
+/* ── BOTTOM NAV (mobile) ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--border);display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom)}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.55rem .25rem .4rem;cursor:pointer;border:none;background:none;gap:.2rem;font-family:'Inter',sans-serif;color:var(--muted);font-size:.62rem;font-weight:500;transition:.15s}
+.bn-item.active{color:var(--rose-d)}
+.bn-item.active-admin{color:var(--admin)}
+.bn-item .bn-icon{font-size:1.25rem;line-height:1}
+
+/* ── CONTENT ── */
+.content{flex:1;padding:1rem 1rem 80px}
+.section{display:none}.section.active{display:block}
+.page-title{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--text);margin-bottom:1rem}
+
+/* ── CARDS ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:1.1rem;margin-bottom:.85rem}
+.card-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+.card-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.card-label.rose{color:var(--rose-d)}.card-label.rose::after{background:var(--rose-m)}
+.card-label.admin{color:var(--admin)}.card-label.admin::after{background:var(--admin-m)}
+
+/* ── FORM ── */
+.field{margin-bottom:.75rem}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:.7rem;font-weight:600;color:var(--muted);margin-bottom:.28rem;text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select,.field textarea{width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:10px;font-family:'Inter',sans-serif;font-size:.92rem;color:var(--text);background:var(--white);outline:none;transition:.15s;-webkit-appearance:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--rose);box-shadow:0 0 0 3px rgba(232,132,154,.12)}
+.field textarea{resize:vertical;min-height:70px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+
+/* ── MODELO CARDS ── */
+.modelo-list{display:flex;flex-direction:column;gap:.5rem}
+.modelo-option{border:1.5px solid var(--border);border-radius:12px;padding:.8rem 1rem;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:space-between;gap:.75rem;background:var(--white)}
+.modelo-option:hover{border-color:var(--rose-m);background:var(--rose-l)}
+.modelo-option.selected{border-color:var(--rose-d);background:var(--rose-l)}
+.modelo-option.selected .mo-check{background:var(--rose-d);border-color:var(--rose-d);color:#fff}
+.mo-info strong{display:block;font-size:.88rem;color:var(--text)}
+.mo-info span{font-size:.74rem;color:var(--muted)}
+.mo-precio{text-align:right;flex-shrink:0}
+.mo-precio .pu{font-family:'Playfair Display',serif;font-size:1rem;color:var(--rose-d);white-space:nowrap}
+.mo-precio .p25{font-size:.7rem;color:var(--muted);white-space:nowrap}
+.mo-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0;transition:.15s}
+.cat-header{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:.5rem .25rem .2rem;margin-top:.25rem}
+
+/* ── EXTRAS CHIPS ── */
+.extras-row{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.25rem}
+.xchip{display:flex;align-items:center;gap:.3rem;padding:.32rem .7rem;border-radius:50px;border:1.5px solid var(--border);font-size:.76rem;cursor:pointer;transition:.15s;user-select:none;background:var(--white);color:var(--muted)}
+.xchip:hover{border-color:var(--rose-m)}
+.xchip.on{border-color:var(--rose-d);background:var(--rose-l);color:var(--rose-d);font-weight:600}
+
+/* ── TARJETA DATOS ── */
+.tarjeta-box{background:var(--rose-l);border:1.5px solid var(--rose-m);border-radius:12px;padding:1rem}
+
+/* ── CANTIDAD STEPPER ── */
+.stepper{display:flex;align-items:center;gap:.75rem;margin-top:.25rem}
+.stepper button{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--white);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);transition:.15s;flex-shrink:0}
+.stepper button:hover{border-color:var(--rose);background:var(--rose-l)}
+.stepper input{flex:1;text-align:center;font-size:1.1rem;font-weight:700;padding:.5rem;border:1.5px solid var(--border);border-radius:10px;font-family:'Inter',sans-serif}
+.stepper input:focus{outline:none;border-color:var(--rose)}
+
+/* ── RESUMEN ── */
+.resumen-box{background:var(--cream-d);border-radius:12px;padding:1rem;margin-top:.75rem}
+.res-row{display:flex;justify-content:space-between;font-size:.82rem;padding:.28rem 0;border-bottom:1px solid var(--border)}
+.res-row:last-child{border-bottom:none}
+.res-row.total{font-weight:700;font-size:.95rem;padding-top:.6rem;margin-top:.25rem;border-top:2px solid var(--border)}
+.res-row.imp{color:var(--rose-d)}
+.total-banner{background:var(--rose-d);color:#fff;border-radius:12px;padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;margin-top:.75rem}
+.total-banner .lbl{font-size:.75rem;opacity:.85;text-transform:uppercase;letter-spacing:.06em}
+.total-banner .val{font-family:'Playfair Display',serif;font-size:1.6rem}
+.saldo-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-top:.6rem}
+.saldo-box{background:var(--white);border-radius:10px;padding:.55rem .6rem;text-align:center;border:1px solid var(--border)}
+.saldo-box .sv{font-weight:700;font-size:.9rem}
+.saldo-box .sl{font-size:.65rem;color:var(--muted);margin-top:.1rem}
+
+/* ── BTNS ── */
+.btn{display:flex;align-items:center;justify-content:center;gap:.4rem;width:100%;padding:.7rem;border-radius:12px;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:.9rem;font-weight:700;transition:.15s}
+.btn-primary{background:var(--rose-d);color:#fff}.btn-primary:hover{background:#9c3a52}
+.btn-ghost{background:var(--cream-d);color:var(--text)}.btn-ghost:hover{background:var(--border)}
+.btn-admin{background:var(--admin);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-sm{width:auto;padding:.45rem .9rem;font-size:.8rem;border-radius:8px}
+.btn-row{display:flex;gap:.6rem}
+
+/* ── LISTA PEDIDOS ── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:.85rem}
+.stat-card .sv{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--rose-d)}
+.stat-card .sl{font-size:.68rem;color:var(--muted);margin-top:.08rem}
+.pedido-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.65rem;transition:.15s}
+.pedido-card:hover{border-color:var(--rose-m)}
+.pc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.6rem}
+.pc-nro{font-size:.72rem;font-weight:700;color:var(--muted)}
+.pc-cliente{font-weight:700;font-size:.95rem}
+.pc-tarjeta{font-size:.78rem;color:var(--muted);margin-top:.1rem}
+.pc-meta{display:flex;flex-wrap:wrap;gap:.4rem;margin:.6rem 0}
+.pc-tag{font-size:.7rem;padding:.18rem .55rem;border-radius:50px;background:var(--cream-d);color:var(--muted)}
+.pc-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--cream-d)}
+.pc-total{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--rose-d)}
+.pc-saldo{font-size:.76rem;font-weight:600}
+.badge{display:inline-flex;align-items:center;gap:.25rem;padding:.2rem .55rem;border-radius:50px;font-size:.68rem;font-weight:700}
+.b-pend{background:var(--amber-l);color:var(--amber)}
+.b-proc{background:var(--admin-l);color:var(--admin)}
+.b-listo{background:var(--green-l);color:var(--green)}
+.b-entregado{background:var(--blue-l);color:var(--blue)}
+.b-cancelado{background:var(--red-l);color:var(--red)}
+.estado-select{font-size:.78rem;padding:.3rem .55rem;border-radius:8px;border:1.5px solid var(--border);background:var(--white);font-family:'Inter',sans-serif;color:var(--text);flex-shrink:0}
+
+/* ── CALCULADORA ── */
+.calc-modelo-list{display:flex;flex-direction:column;gap:.4rem}
+.calc-item{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.65rem .85rem;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;background:var(--white);transition:.15s}
+.calc-item:hover,.calc-item.sel{border-color:var(--rose-d);background:var(--rose-l)}
+.calc-item .ci-name{font-size:.85rem;font-weight:500}
+.calc-item .ci-pu{font-family:'Playfair Display',serif;font-size:.95rem;color:var(--rose-d)}
+.calc-result{background:var(--rose-d);color:#fff;border-radius:14px;padding:1.25rem;margin-top:.85rem;text-align:center}
+.calc-result .cr-label{font-size:.72rem;opacity:.8;text-transform:uppercase;letter-spacing:.08em}
+.calc-result .cr-val{font-family:'Playfair Display',serif;font-size:2rem;margin:.25rem 0}
+.calc-result .cr-sub{font-size:.78rem;opacity:.8}
+
+/* ── PRECIOS ADMIN ── */
+.precio-row{display:flex;align-items:center;justify-content:space-between;padding:.7rem 0;border-bottom:1px solid var(--cream-d);gap:1rem}
+.precio-row:last-child{border-bottom:none}
+.pr-name{font-size:.85rem;font-weight:500}
+.pr-sub{font-size:.72rem;color:var(--muted)}
+.pr-inputs{display:flex;gap:.5rem;align-items:center}
+.pr-inputs input{width:90px;padding:.38rem .55rem;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;font-family:'Inter',sans-serif;text-align:right;outline:none}
+.pr-inputs input:focus{border-color:var(--admin)}
+.pr-tag{font-size:.68rem;color:var(--muted);white-space:nowrap}
+
+/* ── EMPTY / TOAST ── */
+.empty{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:.88rem}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#3d2b2b;color:#fff;padding:.6rem 1.1rem;border-radius:10px;font-size:.82rem;font-weight:500;z-index:999;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}
+.toast.err{background:var(--red)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* SEARCH */
+.search-bar{display:flex;gap:.5rem;margin-bottom:.85rem}
+.search-bar input{flex:1;padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:10px;font-size:.85rem;font-family:'Inter',sans-serif;outline:none;background:var(--white)}
+.search-bar input:focus{border-color:var(--rose)}
+.search-bar select{padding:.55rem .65rem;border:1.5px solid var(--border);border-radius:10px;font-size:.82rem;font-family:'Inter',sans-serif;background:var(--white);color:var(--text);outline:none}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     PANTALLA INICIAL — ELEGIR MODO
+══════════════════════════════════ -->
+<div id="modoSelector">
+  <h1>✦ VaDa's</h1>
+  <p>¿Cómo querés usar la app hoy?</p>
+  <div class="modo-cards">
+    <div class="modo-card pedidos" onclick="entrar('pedidos')">
+      <div class="icon">🌸</div>
+      <h2>Pedidos</h2>
+      <p>Cargar pedidos, ver clientes y calcular precios</p>
+    </div>
+    <div class="modo-card admin" onclick="entrar('admin')">
+      <div class="icon">⚙️</div>
+      <h2>Administración</h2>
+      <p>Precios, estadísticas y exportar Excel</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     APP SHELL
+══════════════════════════════════ -->
+<div id="appShell" style="display:none;flex-direction:column;min-height:100vh">
+
+  <div class="topbar">
+    <div class="topbar-brand">VaDa's <small id="modoLabel">—</small></div>
+    <button class="topbar-mode" id="modoBtn" onclick="volverSelector()">← Cambiar</button>
+  </div>
+
+  <div class="content" id="mainContent">
+
+    <!-- ══ PEDIDOS: NUEVO ══ -->
+    <div class="section" id="sec-nuevo">
+      <p class="page-title">Nuevo pedido</p>
+
+      <div class="card">
+        <div class="card-label rose">Cliente</div>
+        <div class="field"><label>Nombre del cliente</label><input id="cliente" placeholder="Quien hace el pedido" type="text"></div>
+        <div class="field-row">
+          <div class="field"><label>WhatsApp</label><input id="telefono" placeholder="381 xxx xxxx" type="tel"></div>
+          <div class="field"><label>Estado</label>
+            <select id="estado">
+              <option>Pendiente</option><option>En proceso</option><option>Listo</option><option>Entregado</option><option>Cancelado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label rose">✦ Datos de la tarjeta</div>
+        <div class="tarjeta-box">
+          <div class="field"><label>Nombre (a quien va dedicada)</label><input id="tNombre" placeholder="Ej: María Candelaria Vernie" type="text"></div>
+          <div class="field"><label>Fecha del evento</label><input id="tFecha" placeholder="Ej: 15 de noviembre de 2025" type="text"></div>
+          <div class="field"><label>Iglesia o capilla</label><input id="tIglesia" placeholder="Ej: Capilla Divino Misericordioso" type="text"></div>
+          <div class="field"><label>Observaciones o detalles</label><textarea id="tObs" placeholder="Colores, estilo, mensaje especial..."></textarea></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label rose">Modelo</div>
+        <div class="modelo-list" id="modeloList"></div>
+      </div>
+
+      <div class="card" id="extrasCard" style="display:none">
+        <div class="card-label rose">Extras</div>
+        <div class="extras-row" id="extrasRow"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label rose">Cantidad</div>
+        <div class="stepper">
+          <button onclick="stepCant(-1)">−</button>
+          <input type="number" id="cantidad" value="25" min="1" oninput="calcular()">
+          <button onclick="stepCant(1)">+</button>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem">
+          <button class="btn btn-ghost btn-sm" onclick="setCant(25)">25 ud</button>
+          <button class="btn btn-ghost btn-sm" onclick="setCant(50)">50 ud</button>
+          <button class="btn btn-ghost btn-sm" onclick="setCant(75)">75 ud</button>
+          <button class="btn btn-ghost btn-sm" onclick="setCant(100)">100 ud</button>
+        </div>
+      </div>
+
+      <div class="card" id="resumenCard" style="display:none">
+        <div class="card-label rose">Resumen</div>
+        <div class="resumen-box" id="resumenBox"></div>
+        <div class="total-banner">
+          <div><div class="lbl">Total</div><div id="descLabel" style="font-size:.7rem;opacity:.75;margin-top:.1rem"></div></div>
+          <div class="val" id="totalVal">$0</div>
+        </div>
+        <div class="saldo-grid">
+          <div class="saldo-box"><div class="sv" id="sSeñado">$0</div><div class="sl">Señado</div></div>
+          <div class="saldo-box"><div class="sv" id="sSaldo" style="color:var(--red)">$0</div><div class="sl">Saldo</div></div>
+          <div class="saldo-box"><div class="sv" id="sA3">—</div><div class="sl">Hojas A3</div></div>
+        </div>
+        <div class="field-row" style="margin-top:.75rem">
+          <div class="field"><label>Señado / Anticipo ($)</label><input type="number" id="senado" value="0" oninput="calcular()"></div>
+          <div class="field"><label>Descuento (%)</label><input type="number" id="descuento" value="0" min="0" max="100" oninput="calcular()"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="field"><label>Notas internas (no va en la tarjeta)</label><textarea id="notas" placeholder="Solo para vos..."></textarea></div>
+      </div>
+
+      <div class="btn-row" style="margin-bottom:.5rem">
+        <button class="btn btn-ghost" onclick="limpiarForm()">Limpiar</button>
+        <button class="btn btn-primary" onclick="guardarPedido()">✦ Guardar pedido</button>
+      </div>
+    </div>
+
+    <!-- ══ PEDIDOS: LISTA ══ -->
+    <div class="section" id="sec-lista">
+      <p class="page-title">Pedidos</p>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="search-bar">
+        <input id="filtroQ" placeholder="🔍 Buscar cliente o nombre..." oninput="renderLista()">
+        <select id="filtroEst" onchange="renderLista()">
+          <option value="">Todos</option>
+          <option>Pendiente</option><option>En proceso</option><option>Listo</option><option>Entregado</option><option>Cancelado</option>
+        </select>
+      </div>
+      <div id="pedidosList"></div>
+      <div class="empty" id="emptyLista" style="display:none">No hay pedidos todavía ✦</div>
+    </div>
+
+    <!-- ══ PEDIDOS: CALCULAR PRECIO ══ -->
+    <div class="section" id="sec-calc">
+      <p class="page-title">Calcular precio</p>
+      <div class="card">
+        <div class="card-label rose">Elegí el modelo</div>
+        <div class="calc-modelo-list" id="calcModeloList"></div>
+      </div>
+      <div class="card" id="calcExtrasCard" style="display:none">
+        <div class="card-label rose">Extras</div>
+        <div class="extras-row" id="calcExtrasRow"></div>
+      </div>
+      <div class="card" id="calcCantCard" style="display:none">
+        <div class="card-label rose">Cantidad</div>
+        <div class="stepper">
+          <button onclick="stepCalc(-1)">−</button>
+          <input type="number" id="calcCant" value="25" min="1" oninput="calcCalc()">
+          <button onclick="stepCalc(1)">+</button>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem">
+          <button class="btn btn-ghost btn-sm" onclick="setCalcCant(1)">1 ud</button>
+          <button class="btn btn-ghost btn-sm" onclick="setCalcCant(25)">25 ud</button>
+          <button class="btn btn-ghost btn-sm" onclick="setCalcCant(50)">50 ud</button>
+          <button class="btn btn-ghost btn-sm" onclick="setCalcCant(100)">100 ud</button>
+        </div>
+        <div class="calc-result" id="calcResult" style="display:none">
+          <div class="cr-label">Total estimado</div>
+          <div class="cr-val" id="calcTotal">$0</div>
+          <div class="cr-sub" id="calcSub">— por unidad</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ADMIN: ESTADÍSTICAS ══ -->
+    <div class="section" id="sec-stats">
+      <p class="page-title">Estadísticas</p>
+      <div class="stats-grid" id="statsGridAdmin"></div>
+      <div class="card" id="estadoBreakdown"></div>
+      <button class="btn btn-green" onclick="exportarExcel()">⬇ Exportar Excel completo</button>
+    </div>
+
+    <!-- ══ ADMIN: PRECIOS ══ -->
+    <div class="section" id="sec-precios">
+      <p class="page-title">Lista de precios</p>
+      <div class="card">
+        <div class="card-label admin">Modelos — precio por 25 unidades y por unidad</div>
+        <div id="preciosList"></div>
+        <button class="btn btn-admin" style="margin-top:1rem" onclick="guardarPrecios()">Guardar precios</button>
+      </div>
+      <div class="card">
+        <div class="card-label admin">Costos de producción (por unidad)</div>
+        <div id="costosList"></div>
+        <button class="btn btn-admin" style="margin-top:1rem" onclick="guardarPrecios()">Guardar</button>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav" id="bottomNav"></nav>
+
+</div><!-- /appShell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// MODELOS — con precio por unidad
+// ══════════════════════════════════════
+const MODELOS = [
+  // ── CLÁSICOS (papel ilustración 300g, imprenta A3)
+  { id:'MC-S',   cat:'Clásico', nombre:'Clásico Simple',                    medidas:'8×13 cm', tipo:'ilustración', extras:[],                        pu:1400, p25:35000, udsA3:10 },
+  { id:'MC-F',   cat:'Clásico', nombre:'Clásico + Foil',                    medidas:'8×13 cm', tipo:'ilustración', extras:['foil'],                   pu:2400, p25:60000, udsA3:10 },
+  { id:'MC-M',   cat:'Clásico', nombre:'Clásico + Medalla',                 medidas:'8×13 cm', tipo:'ilustración', extras:['medalla'],                pu:3000, p25:75000, udsA3:10 },
+  { id:'MC-FM',  cat:'Clásico', nombre:'Clásico + Foil + Medalla',          medidas:'8×13 cm', tipo:'ilustración', extras:['foil','medalla'],          pu:4000, p25:100000,udsA3:10 },
+  { id:'MC-FMC', cat:'Clásico', nombre:'Clásico + Foil + Medalla + Calado', medidas:'8×13 cm', tipo:'ilustración', extras:['foil','medalla','calado'], pu:4800, p25:120000,udsA3:10 },
+  // ── CLÁSICO TELADO (inkjet en casa)
+  { id:'MC-T',   cat:'Clásico Telado', nombre:'Clásico Telado Simple',           medidas:'8×13 cm', tipo:'telado', extras:[],          pu:1600, p25:40000, udsA3:10 },
+  { id:'MC-TM',  cat:'Clásico Telado', nombre:'Clásico Telado + Medalla',        medidas:'8×13 cm', tipo:'telado', extras:['medalla'], pu:3200, p25:80000, udsA3:10 },
+  // ── SEÑALADOR
+  { id:'MS-S',   cat:'Señalador', nombre:'Señalador Simple',           medidas:'6×17 cm', tipo:'ilustración', extras:[],                pu:1400, p25:35000, udsA3:8 },
+  { id:'MS-F',   cat:'Señalador', nombre:'Señalador + Foil',           medidas:'6×17 cm', tipo:'ilustración', extras:['foil'],          pu:2400, p25:60000, udsA3:8 },
+  { id:'MS-M',   cat:'Señalador', nombre:'Señalador + Medalla',        medidas:'6×17 cm', tipo:'ilustración', extras:['medalla'],       pu:3000, p25:75000, udsA3:8 },
+  { id:'MS-FM',  cat:'Señalador', nombre:'Señalador + Foil + Medalla', medidas:'6×17 cm', tipo:'ilustración', extras:['foil','medalla'],pu:4000, p25:100000,udsA3:8 },
+  { id:'MS-FMC', cat:'Señalador', nombre:'Señalador + Foil + Medalla + Calado',medidas:'6×17 cm',tipo:'ilustración',extras:['foil','medalla','calado'],pu:4800,p25:120000,udsA3:8},
+  // ── CON SOBRE
+  { id:'MCS',    cat:'Con Sobre', nombre:'Con Sobre — Set',       medidas:'13×7,8 + sobre 13,5×8', tipo:'perlado', extras:['foil','sobre'],          pu:null, p25:null, udsA3:8 },
+  { id:'MCE',    cat:'Sobre Especial', nombre:'Sobre Especial — Set', medidas:'8,7×12,5 + sobre 9,5×9', tipo:'perlado', extras:['foil','sobre'],     pu:null, p25:null, udsA3:9 },
+  // ── PREMIUM / ESTAMPITAS
+  { id:'EP-DC',  cat:'Premium / Estampitas', nombre:'Estampita doble + dije (simple)',       medidas:'unitario', tipo:'premium', extras:[],                pu:4500, p25:null, udsA3:4 },
+  { id:'EP-CC',  cat:'Premium / Estampitas', nombre:'Estampita + Calado + Cinta',             medidas:'unitario', tipo:'premium', extras:['calado','cinta'],pu:6000, p25:null, udsA3:4 },
+  { id:'EP-MC',  cat:'Premium / Estampitas', nombre:'Estampita + Calado + Medalla (sin cinta)',medidas:'unitario',tipo:'premium', extras:['calado','medalla'],pu:6500,p25:null,udsA3:4},
+  { id:'EP-MCC', cat:'Premium / Estampitas', nombre:'Estampita + Medalla + Cinta + Calado',   medidas:'unitario', tipo:'premium', extras:['calado','medalla','cinta'],pu:7500,p25:null,udsA3:4},
+  { id:'EP-PR',  cat:'Premium / Estampitas', nombre:'Estampita Premium c/ Calado + Cinta',    medidas:'unitario', tipo:'premium', extras:['calado','cinta'],pu:5500, p25:null, udsA3:4 },
+];
+
+const EXTRAS_META = {
+  foil:        { label:'Foil',           emoji:'✨' },
+  medalla:     { label:'Medalla',        emoji:'🏅' },
+  calado:      { label:'Calado',         emoji:'✂️' },
+  sobre:       { label:'Sobre',          emoji:'✉️' },
+  cinta:       { label:'Cinta',          emoji:'🎀' },
+  troquelado:  { label:'Troquelado',     emoji:'⚙️' },
+  texturizador:{ label:'Texturizador',   emoji:'🌸' },
+  cinta_bifaz: { label:'Cinta bifaz',    emoji:'🎗️' },
+  papel_fondo: { label:'Papel de fondo', emoji:'📄' },
+};
+
+// ══════════════════════════════════════
+// PRECIOS EDITABLES
+// ══════════════════════════════════════
+let PRECIOS_MODELOS = JSON.parse(localStorage.getItem('vadas_pm') || 'null') ||
+  Object.fromEntries(MODELOS.map(m => [m.id, { pu: m.pu, p25: m.p25 }]));
+
+let COSTOS = JSON.parse(localStorage.getItem('vadas_costos') || 'null') || {
+  a3: 1800, foil:800, medalla:800, calado:600, sobre:600,
+  cinta:300, troquelado:400, texturizador:350, cinta_bifaz:150, papel_fondo:500,
+  mano_obra:600, materiales:200,
+};
+
+// ══════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════
+let pedidos = JSON.parse(localStorage.getItem('vadas_p4') || '[]');
+let modoActual = '';
+let modeloSel = null;
+let extrasActivos = new Set();
+let calcModeloSel = null;
+let calcExtras = new Set();
+
+// ══════════════════════════════════════
+// NAVEGACIÓN DE MODOS
+// ══════════════════════════════════════
+const NAV_PEDIDOS = [
+  { id:'nuevo',  icon:'✦',  label:'Nuevo' },
+  { id:'lista',  icon:'≡',  label:'Pedidos' },
+  { id:'calc',   icon:'🧮', label:'Precio' },
+];
+const NAV_ADMIN = [
+  { id:'stats',   icon:'📊', label:'Estadísticas' },
+  { id:'precios', icon:'💰', label:'Precios' },
+];
+
+function entrar(modo) {
+  modoActual = modo;
+  document.getElementById('modoSelector').style.display = 'none';
+  const shell = document.getElementById('appShell');
+  shell.style.display = 'flex';
+  const lbl = document.getElementById('modoLabel');
+  const btn = document.getElementById('modoBtn');
+  if (modo === 'pedidos') {
+    lbl.textContent = 'Pedidos';
+    btn.className = 'topbar-mode pedidos';
+    buildNav(NAV_PEDIDOS, false);
+    goSec('nuevo');
+  } else {
+    lbl.textContent = 'Administración';
+    btn.className = 'topbar-mode admin';
+    buildNav(NAV_ADMIN, true);
+    goSec('stats');
+  }
+}
+
+function volverSelector() {
+  document.getElementById('appShell').style.display = 'none';
+  document.getElementById('modoSelector').style.display = 'flex';
+}
+
+function buildNav(items, isAdmin) {
+  const nav = document.getElementById('bottomNav');
+  nav.innerHTML = items.map(i => `
+    <button class="bn-item" id="bn-${i.id}" onclick="goSec('${i.id}')">
+      <span class="bn-icon">${i.icon}</span>${i.label}
+    </button>`).join('');
+}
+
+function goSec(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active','active-admin'));
+  document.getElementById('sec-' + id)?.classList.add('active');
+  const bn = document.getElementById('bn-' + id);
+  if (bn) bn.classList.add(modoActual === 'admin' ? 'active-admin' : 'active');
+  document.getElementById('mainContent').scrollTop = 0;
+  if (id === 'lista') renderLista();
+  if (id === 'stats') renderStats();
+  if (id === 'precios') renderPrecios();
+  if (id === 'calc') renderCalcModelos();
+  if (id === 'nuevo') renderModeloList();
+}
+
+// ══════════════════════════════════════
+// RENDER MODELOS (nuevo pedido)
+// ══════════════════════════════════════
+function renderModeloList() {
+  const cats = [...new Set(MODELOS.map(m => m.cat))];
+  let html = '';
+  cats.forEach(cat => {
+    html += `<div class="cat-header">${cat}</div>`;
+    MODELOS.filter(m => m.cat === cat).forEach(m => {
+      const pm = PRECIOS_MODELOS[m.id] || {};
+      const pu = pm.pu ?? m.pu;
+      const p25 = pm.p25 ?? m.p25;
+      html += `<div class="modelo-option" id="mo-${m.id}" onclick="selModelo('${m.id}')">
+        <div class="mo-check" id="mc-${m.id}">✓</div>
+        <div class="mo-info" style="flex:1">
+          <strong>${m.nombre}</strong>
+          <span>${m.medidas} · ${m.tipo}</span>
+        </div>
+        <div class="mo-precio">
+          <div class="pu">${pu ? '$'+fmt(pu) : '—'}<span style="font-size:.7rem;font-family:'Inter',sans-serif;font-weight:400">/ud</span></div>
+          ${p25 ? `<div class="p25">$${fmt(p25)} × 25</div>` : ''}
+        </div>
+      </div>`;
+    });
+  });
+  document.getElementById('modeloList').innerHTML = html;
+}
+
+function selModelo(id) {
+  modeloSel = MODELOS.find(m => m.id === id);
+  document.querySelectorAll('.modelo-option').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.mo-check').forEach(el => el.style.cssText = '');
+  document.getElementById('mo-' + id)?.classList.add('selected');
+  extrasActivos = new Set(modeloSel.extras);
+  renderExtras();
+  calcular();
+}
+
+function renderExtras() {
+  if (!modeloSel) { document.getElementById('extrasCard').style.display = 'none'; return; }
+  document.getElementById('extrasCard').style.display = 'block';
+  document.getElementById('extrasRow').innerHTML = Object.entries(EXTRAS_META).map(([k, meta]) =>
+    `<div class="xchip ${extrasActivos.has(k) ? 'on' : ''}" onclick="toggleExtra('${k}',this)">${meta.emoji} ${meta.label}</div>`
+  ).join('');
+}
+
+function toggleExtra(k, el) {
+  extrasActivos.has(k) ? extrasActivos.delete(k) : extrasActivos.add(k);
+  el.classList.toggle('on');
+  calcular();
+}
+
+// ══════════════════════════════════════
+// CALCULAR (nuevo pedido)
+// ══════════════════════════════════════
+function calcular() {
+  if (!modeloSel) { document.getElementById('resumenCard').style.display = 'none'; return; }
+  const cant = parseInt(document.getElementById('cantidad').value) || 1;
+  const desc = parseFloat(document.getElementById('descuento').value) || 0;
+  const senado = parseFloat(document.getElementById('senado').value) || 0;
+  const pm = PRECIOS_MODELOS[modeloSel.id] || {};
+  const pu = pm.pu ?? modeloSel.pu ?? 0;
+  const hojasA3 = Math.ceil(cant / modeloSel.udsA3);
+
+  // extras adicionales no incluidos en el modelo
+  let extrasExtra = [...extrasActivos].filter(k => !modeloSel.extras.includes(k));
+  let costoExtras = extrasExtra.reduce((a, k) => a + (COSTOS[k] || 0), 0);
+
+  const subtotal = (pu + costoExtras) * cant;
+  const descImp = subtotal * desc / 100;
+  const total = subtotal - descImp;
+  const saldo = total - senado;
+
+  let html = `<div class="res-row imp"><span>Precio unitario (${modeloSel.nombre})</span><span>$${fmt(pu)}</span></div>`;
+  if (costoExtras > 0) html += `<div class="res-row"><span>Extras adicionales × ${cant}</span><span>$${fmt(costoExtras * cant)}</span></div>`;
+  html += `<div class="res-row"><span>Subtotal (${cant} ud)</span><span>$${fmt(subtotal)}</span></div>`;
+  if (desc > 0) html += `<div class="res-row" style="color:var(--green)"><span>Descuento ${desc}%</span><span>−$${fmt(descImp)}</span></div>`;
+  html += `<div class="res-row total"><span>TOTAL</span><span>$${fmt(total)}</span></div>`;
+  document.getElementById('resumenBox').innerHTML = html;
+  document.getElementById('totalVal').textContent = '$' + fmt(total);
+  document.getElementById('descLabel').textContent = desc > 0 ? `Descuento ${desc}% aplicado` : '';
+  document.getElementById('sSeñado').textContent = '$' + fmt(senado);
+  document.getElementById('sSaldo').textContent = '$' + fmt(Math.max(0, saldo));
+  document.getElementById('sSaldo').style.color = saldo > 0 ? 'var(--red)' : 'var(--green)';
+  document.getElementById('sA3').textContent = hojasA3 + ' hoja' + (hojasA3 > 1 ? 's' : '');
+  document.getElementById('resumenCard').style.display = 'block';
+  window._calc = { cant, desc, senado, pu, costoExtras, subtotal, descImp, total, saldo, hojasA3 };
+}
+
+function stepCant(d) { const el = document.getElementById('cantidad'); el.value = Math.max(1, (parseInt(el.value)||1) + d); calcular(); }
+function setCant(v) { document.getElementById('cantidad').value = v; calcular(); }
+
+// ══════════════════════════════════════
+// CALCULAR PRECIO (tab independiente)
+// ══════════════════════════════════════
+function renderCalcModelos() {
+  const cats = [...new Set(MODELOS.map(m => m.cat))];
+  let html = '';
+  cats.forEach(cat => {
+    html += `<div class="cat-header">${cat}</div>`;
+    MODELOS.filter(m => m.cat === cat).forEach(m => {
+      const pm = PRECIOS_MODELOS[m.id] || {};
+      const pu = pm.pu ?? m.pu;
+      html += `<div class="calc-item" id="ci-${m.id}" onclick="selCalcModelo('${m.id}')">
+        <span class="ci-name">${m.nombre}</span>
+        <span class="ci-pu">${pu ? '$'+fmt(pu)+'/ud' : '—'}</span>
+      </div>`;
+    });
+  });
+  document.getElementById('calcModeloList').innerHTML = html;
+  document.getElementById('calcExtrasCard').style.display = 'none';
+  document.getElementById('calcCantCard').style.display = 'none';
+}
+
+function selCalcModelo(id) {
+  calcModeloSel = MODELOS.find(m => m.id === id);
+  document.querySelectorAll('.calc-item').forEach(el => el.classList.remove('sel'));
+  document.getElementById('ci-' + id)?.classList.add('sel');
+  calcExtras = new Set(calcModeloSel.extras);
+  document.getElementById('calcExtrasCard').style.display = 'block';
+  document.getElementById('calcExtrasCard').querySelector('.extras-row').innerHTML =
+    Object.entries(EXTRAS_META).map(([k, meta]) =>
+      `<div class="xchip ${calcExtras.has(k) ? 'on' : ''}" onclick="toggleCalcExtra('${k}',this)">${meta.emoji} ${meta.label}</div>`
+    ).join('');
+  document.getElementById('calcCantCard').style.display = 'block';
+  calcCalc();
+}
+
+function toggleCalcExtra(k, el) {
+  calcExtras.has(k) ? calcExtras.delete(k) : calcExtras.add(k);
+  el.classList.toggle('on');
+  calcCalc();
+}
+
+function calcCalc() {
+  if (!calcModeloSel) return;
+  const cant = parseInt(document.getElementById('calcCant').value) || 1;
+  const pm = PRECIOS_MODELOS[calcModeloSel.id] || {};
+  const pu = pm.pu ?? calcModeloSel.pu ?? 0;
+  let extrasExtra = [...calcExtras].filter(k => !calcModeloSel.extras.includes(k));
+  const costoExtras = extrasExtra.reduce((a, k) => a + (COSTOS[k] || 0), 0);
+  const total = (pu + costoExtras) * cant;
+  document.getElementById('calcResult').style.display = 'block';
+  document.getElementById('calcTotal').textContent = '$' + fmt(total);
+  document.getElementById('calcSub').textContent = `$${fmt(pu + costoExtras)} por unidad · ${cant} ud`;
+}
+
+function stepCalc(d) { const el = document.getElementById('calcCant'); el.value = Math.max(1, (parseInt(el.value)||1) + d); calcCalc(); }
+function setCalcCant(v) { document.getElementById('calcCant').value = v; calcCalc(); }
+
+// ══════════════════════════════════════
+// GUARDAR PEDIDO
+// ══════════════════════════════════════
+function guardarPedido() {
+  const cliente = document.getElementById('cliente').value.trim();
+  if (!cliente) { toast('Falta el nombre del cliente', true); return; }
+  if (!modeloSel) { toast('Seleccioná un modelo', true); return; }
+  if (!window._calc) calcular();
+  const c = window._calc;
+  const pedido = {
+    id: Date.now(),
+    nro: (pedidos.length ? Math.max(...pedidos.map(p => p.nro)) : 0) + 1,
+    cliente, telefono: document.getElementById('telefono').value.trim(),
+    estado: document.getElementById('estado').value,
+    tNombre: document.getElementById('tNombre').value.trim(),
+    tFecha: document.getElementById('tFecha').value.trim(),
+    tIglesia: document.getElementById('tIglesia').value.trim(),
+    tObs: document.getElementById('tObs').value.trim(),
+    modeloId: modeloSel.id, modelo: modeloSel.nombre,
+    medidas: modeloSel.medidas, tipo: modeloSel.tipo,
+    extras: [...extrasActivos].map(k => EXTRAS_META[k]?.label || k).join(', '),
+    cantidad: c.cant, hojasA3: c.hojasA3,
+    precioUnitario: c.pu, descuento: c.desc,
+    senado: c.senado, total: Math.round(c.total), saldo: Math.round(c.saldo),
+    notas: document.getElementById('notas').value.trim(),
+    fechaCreacion: new Date().toLocaleDateString('es-AR'),
+  };
+  pedidos.push(pedido);
+  localStorage.setItem('vadas_p4', JSON.stringify(pedidos));
+  toast('✦ Pedido #' + pedido.nro + ' guardado');
+  limpiarForm();
+}
+
+function limpiarForm() {
+  ['cliente','telefono','tNombre','tFecha','tIglesia','tObs','notas'].forEach(id => document.getElementById(id).value = '');
+  ['senado','descuento'].forEach(id => document.getElementById(id).value = 0);
+  document.getElementById('cantidad').value = 25;
+  document.getElementById('estado').value = 'Pendiente';
+  modeloSel = null; extrasActivos = new Set();
+  document.querySelectorAll('.modelo-option').forEach(el => el.classList.remove('selected'));
+  document.getElementById('extrasCard').style.display = 'none';
+  document.getElementById('resumenCard').style.display = 'none';
+  window._calc = null;
+  window.scrollTo(0, 0);
+}
+
+// ══════════════════════════════════════
+// LISTA
+// ══════════════════════════════════════
+const BC = { Pendiente:'b-pend','En proceso':'b-proc',Listo:'b-listo',Entregado:'b-entregado',Cancelado:'b-cancelado' };
+function renderLista() {
+  const q = (document.getElementById('filtroQ').value || '').toLowerCase();
+  const est = document.getElementById('filtroEst').value;
+  const fil = pedidos.filter(p =>
+    (!q || p.cliente.toLowerCase().includes(q) || (p.tNombre||'').toLowerCase().includes(q)) &&
+    (!est || p.estado === est)
+  ).slice().reverse();
+
+  renderStatsGrid('statsGrid');
+  const cont = document.getElementById('pedidosList');
+  document.getElementById('emptyLista').style.display = fil.length ? 'none' : 'block';
+  cont.innerHTML = fil.map(p => `
+    <div class="pedido-card">
+      <div class="pc-header">
+        <div>
+          <div class="pc-nro">#${p.nro} · ${p.fechaCreacion}</div>
+          <div class="pc-cliente">${p.cliente}</div>
+          <div class="pc-tarjeta">✦ ${p.tNombre||'—'} · ${p.tIglesia||'—'}</div>
+        </div>
+        <span class="badge ${BC[p.estado]||'b-pend'}">${p.estado}</span>
+      </div>
+      <div class="pc-meta">
+        <span class="pc-tag">${p.modelo}</span>
+        <span class="pc-tag">${p.cantidad} ud · ${p.hojasA3||'—'} A3</span>
+        ${p.extras ? `<span class="pc-tag">${p.extras}</span>` : ''}
+      </div>
+      <div class="pc-footer">
+        <div>
+          <div class="pc-total">$${fmt(p.total)}</div>
+          <div class="pc-saldo" style="color:${(p.saldo||0)>0?'var(--red)':'var(--green)'}">Saldo: $${fmt(p.saldo||0)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <select class="estado-select" onchange="cambiarEstado(${p.id},this.value)">
+            <option value="">Estado…</option>
+            <option>Pendiente</option><option>En proceso</option><option>Listo</option><option>Entregado</option><option>Cancelado</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="borrarPedido(${p.id})" style="padding:.3rem .5rem;color:var(--red)">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function cambiarEstado(id, est) {
+  if (!est) return;
+  const p = pedidos.find(x => x.id === id);
+  if (p) { p.estado = est; localStorage.setItem('vadas_p4', JSON.stringify(pedidos)); renderLista(); toast('Estado actualizado'); }
+}
+function borrarPedido(id) {
+  if (!confirm('¿Eliminar este pedido?')) return;
+  pedidos = pedidos.filter(p => p.id !== id);
+  localStorage.setItem('vadas_p4', JSON.stringify(pedidos));
+  renderLista(); toast('Pedido eliminado');
+}
+
+// ══════════════════════════════════════
+// STATS
+// ══════════════════════════════════════
+function renderStatsGrid(containerId) {
+  const total = pedidos.reduce((a, p) => a + (p.total||0), 0);
+  const saldo = pedidos.filter(p => p.estado !== 'Entregado' && p.estado !== 'Cancelado').reduce((a, p) => a + (p.saldo||0), 0);
+  const enCurso = pedidos.filter(p => p.estado === 'Pendiente' || p.estado === 'En proceso').length;
+  document.getElementById(containerId).innerHTML = `
+    <div class="stat-card"><div class="sv">${pedidos.length}</div><div class="sl">Total pedidos</div></div>
+    <div class="stat-card"><div class="sv">${enCurso}</div><div class="sl">En curso</div></div>
+    <div class="stat-card"><div class="sv">$${fmt(total)}</div><div class="sl">Facturación total</div></div>
+    <div class="stat-card"><div class="sv" style="color:var(--green)">$${fmt(saldo)}</div><div class="sl">Saldo a cobrar</div></div>
+  `;
+}
+
+function renderStats() {
+  renderStatsGrid('statsGridAdmin');
+  const estados = ['Pendiente','En proceso','Listo','Entregado','Cancelado'];
+  const breakdown = estados.map(e => {
+    const n = pedidos.filter(p => p.estado === e).length;
+    return n > 0 ? `<div class="precio-row"><div><div class="pr-name">${e}</div></div><div style="font-weight:700">${n}</div></div>` : '';
+  }).join('');
+  document.getElementById('estadoBreakdown').innerHTML = `<div class="card-label admin">Por estado</div>${breakdown || '<div class="empty" style="padding:1rem">Sin datos</div>'}`;
+}
+
+// ══════════════════════════════════════
+// PRECIOS ADMIN
+// ══════════════════════════════════════
+function renderPrecios() {
+  const cats = [...new Set(MODELOS.map(m => m.cat))];
+  let html = '';
+  cats.forEach(cat => {
+    html += `<div class="cat-header" style="color:var(--admin)">${cat}</div>`;
+    MODELOS.filter(m => m.cat === cat).forEach(m => {
+      const pm = PRECIOS_MODELOS[m.id] || {};
+      const pu = pm.pu ?? m.pu ?? '';
+      const p25 = pm.p25 ?? m.p25 ?? '';
+      html += `<div class="precio-row">
+        <div>
+          <div class="pr-name">${m.nombre}</div>
+          <div class="pr-sub">${m.medidas}</div>
+        </div>
+        <div class="pr-inputs">
+          <div>
+            <div class="pr-tag" style="text-align:center;margin-bottom:.2rem">x1</div>
+            <input type="number" id="pr_pu_${m.id}" value="${pu}" placeholder="—">
+          </div>
+          <div>
+            <div class="pr-tag" style="text-align:center;margin-bottom:.2rem">×25</div>
+            <input type="number" id="pr_p25_${m.id}" value="${p25}" placeholder="—">
+          </div>
+        </div>
+      </div>`;
+    });
+  });
+  document.getElementById('preciosList').innerHTML = html;
+
+  // costos
+  const costoItems = [
+    {k:'a3', label:'Hoja A3 Gráfica Noa'},
+    ...Object.entries(EXTRAS_META).map(([k,v]) => ({k, label: v.emoji+' '+v.label})),
+    {k:'mano_obra', label:'Mano de obra (x ud)'},
+    {k:'materiales', label:'Materiales menores (x ud)'},
+  ];
+  document.getElementById('costosList').innerHTML = costoItems.map(c => `
+    <div class="precio-row">
+      <div class="pr-name">${c.label}</div>
+      <div class="pr-inputs">
+        <input type="number" id="co_${c.k}" value="${COSTOS[c.k]||0}" style="width:100px">
+      </div>
+    </div>`).join('');
+}
+
+function guardarPrecios() {
+  MODELOS.forEach(m => {
+    const puEl = document.getElementById(`pr_pu_${m.id}`);
+    const p25El = document.getElementById(`pr_p25_${m.id}`);
+    if (puEl || p25El) {
+      PRECIOS_MODELOS[m.id] = {
+        pu: puEl && puEl.value !== '' ? parseFloat(puEl.value) : null,
+        p25: p25El && p25El.value !== '' ? parseFloat(p25El.value) : null,
+      };
+    }
+  });
+  ['a3','foil','medalla','calado','sobre','cinta','troquelado','texturizador','cinta_bifaz','papel_fondo','mano_obra','materiales'].forEach(k => {
+    const el = document.getElementById('co_' + k);
+    if (el) COSTOS[k] = parseFloat(el.value) || 0;
+  });
+  localStorage.setItem('vadas_pm', JSON.stringify(PRECIOS_MODELOS));
+  localStorage.setItem('vadas_costos', JSON.stringify(COSTOS));
+  toast('✦ Precios guardados');
+  renderModeloList();
+}
+
+// ══════════════════════════════════════
+// EXPORTAR
+// ══════════════════════════════════════
+function exportarExcel() {
+  if (!pedidos.length) { toast('No hay pedidos', true); return; }
+  const cols = ['N°','Fecha','Cliente','WhatsApp','Estado','Nombre tarjeta','Fecha evento','Iglesia','Obs. tarjeta','Modelo','Medidas','Tipo papel','Extras','Cantidad','Hojas A3','Precio x ud','Descuento%','Señado','Total','Saldo','Notas'];
+  const rows = pedidos.map(p => [p.nro,p.fechaCreacion,p.cliente,p.telefono,p.estado,p.tNombre,p.tFecha,p.tIglesia,p.tObs,p.modelo,p.medidas,p.tipo,p.extras,p.cantidad,p.hojasA3,p.precioUnitario,p.descuento,p.senado,p.total,p.saldo,p.notas]);
+  const csv = [cols,...rows].map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download = `VaDas_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast(`✦ ${pedidos.length} pedidos exportados`);
+}
+
+// ══════════════════════════════════════
+// UTIL
+// ══════════════════════════════════════
+function fmt(n) { return Math.round(n||0).toLocaleString('es-AR'); }
+function toast(msg, err) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (err ? ' err' : '');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
